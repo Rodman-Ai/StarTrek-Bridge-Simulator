@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Star Trek: Bridge Command — USS Enterprise NCC-1701-D</title>
+  <script type="module" crossorigin src="./assets/index-C4IjxQsk.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/three-C9y91Eyp.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-Dj6Yfe9l.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- LCARS HUD Overlay -->
+    <div id="hud-overlay">
+      <!-- Top bar -->
+      <div id="hud-top">
+        <div class="lcars-bar lcars-bar-top">
+          <div class="lcars-elbow lcars-elbow-tl"></div>
+          <div class="lcars-title">
+            <span class="ship-name">USS ENTERPRISE</span>
+            <span class="ship-reg">NCC-1701-D</span>
+          </div>
+          <div class="lcars-stardate" id="stardate-display">STARDATE 47634.4</div>
+          <div class="lcars-alert" id="alert-indicator">
+            <span id="alert-text">ALL SYSTEMS NORMAL</span>
+          </div>
+          <div class="lcars-elbow lcars-elbow-tr"></div>
+        </div>
+      </div>
+
+      <!-- Left panel -->
+      <div id="hud-left">
+        <div class="lcars-panel lcars-panel-left">
+          <div class="lcars-section-header">SHIP STATUS</div>
+          <div class="lcars-stat">
+            <span class="stat-label">SHIELDS</span>
+            <div class="stat-bar-container">
+              <div class="stat-bar shields-bar" id="shields-bar"></div>
+            </div>
+            <span class="stat-value" id="shields-value">100%</span>
+          </div>
+          <div class="lcars-stat">
+            <span class="stat-label">HULL</span>
+            <div class="stat-bar-container">
+              <div class="stat-bar hull-bar" id="hull-bar"></div>
+            </div>
+            <span class="stat-value" id="hull-value">100%</span>
+          </div>
+          <div class="lcars-stat">
+            <span class="stat-label">POWER</span>
+            <div class="stat-bar-container">
+              <div class="stat-bar power-bar" id="power-bar"></div>
+            </div>
+            <span class="stat-value" id="power-value">100%</span>
+          </div>
+          <div class="lcars-divider"></div>
+          <div class="lcars-section-header">NAVIGATION</div>
+          <div class="lcars-info-row">
+            <span class="info-label">WARP</span>
+            <span class="info-value" id="warp-display">IMPULSE</span>
+          </div>
+          <div class="lcars-info-row">
+            <span class="info-label">HEADING</span>
+            <span class="info-value" id="heading-display">247 MARK 15</span>
+          </div>
+          <div class="lcars-info-row">
+            <span class="info-label">SECTOR</span>
+            <span class="info-value" id="sector-display">001</span>
+          </div>
+          <div class="lcars-divider"></div>
+          <div class="lcars-section-header">WEAPONS</div>
+          <div class="lcars-info-row">
+            <span class="info-label">PHASERS</span>
+            <span class="info-value" id="phasers-display">READY</span>
+          </div>
+          <div class="lcars-info-row">
+            <span class="info-label">TORPEDOES</span>
+            <span class="info-value" id="torpedoes-display">10 / 10</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div id="hud-right">
+        <div class="lcars-panel lcars-panel-right">
+          <div class="lcars-section-header">SENSORS</div>
+          <div class="lcars-sensor-display" id="sensor-display">
+            <canvas id="sensor-canvas" width="160" height="160"></canvas>
+          </div>
+          <div class="lcars-divider"></div>
+          <div class="lcars-section-header">ENEMY STATUS</div>
+          <div class="lcars-info-row">
+            <span class="info-label">TYPE</span>
+            <span class="info-value" id="enemy-type">NONE</span>
+          </div>
+          <div class="lcars-stat">
+            <span class="stat-label">E.SHIELDS</span>
+            <div class="stat-bar-container">
+              <div class="stat-bar enemy-shields-bar" id="enemy-shields-bar" style="width:0%"></div>
+            </div>
+            <span class="stat-value" id="enemy-shields-value">--</span>
+          </div>
+          <div class="lcars-stat">
+            <span class="stat-label">E.HULL</span>
+            <div class="stat-bar-container">
+              <div class="stat-bar enemy-hull-bar" id="enemy-hull-bar" style="width:0%"></div>
+            </div>
+            <span class="stat-value" id="enemy-hull-value">--</span>
+          </div>
+          <div class="lcars-divider"></div>
+          <div class="lcars-section-header">CREW STATUS</div>
+          <div class="crew-status" id="crew-status">ALL STATIONS READY</div>
+        </div>
+      </div>
+
+      <!-- Bottom action bar -->
+      <div id="hud-bottom">
+        <div class="lcars-bar lcars-bar-bottom">
+          <div class="lcars-elbow lcars-elbow-bl"></div>
+          <div class="lcars-actions" id="action-buttons">
+            <button class="lcars-btn lcars-btn-orange" id="btn-phasers" onclick="window.gameAction('phasers')">
+              FIRE PHASERS
+            </button>
+            <button class="lcars-btn lcars-btn-red" id="btn-torpedoes" onclick="window.gameAction('torpedoes')">
+              TORPEDOES
+            </button>
+            <button class="lcars-btn lcars-btn-blue" id="btn-shields" onclick="window.gameAction('shields')">
+              SHIELDS
+            </button>
+            <button class="lcars-btn lcars-btn-gold" id="btn-evasive" onclick="window.gameAction('evasive')">
+              EVASIVE
+            </button>
+            <button class="lcars-btn lcars-btn-peach" id="btn-hail" onclick="window.gameAction('hail')">
+              HAIL
+            </button>
+            <button class="lcars-btn lcars-btn-teal" id="btn-warp" onclick="window.gameAction('warp')">
+              WARP OUT
+            </button>
+            <button class="lcars-btn lcars-btn-gray" id="btn-scan" onclick="window.gameAction('scan')">
+              SCAN
+            </button>
+            <button class="lcars-btn lcars-btn-purple" id="btn-repair" onclick="window.gameAction('repair')">
+              REPAIR
+            </button>
+          </div>
+          <div class="lcars-elbow lcars-elbow-br"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crew dialogue / notification bar -->
+    <div id="dialogue-box" class="hidden">
+      <div class="dialogue-portrait" id="dialogue-portrait"></div>
+      <div class="dialogue-content">
+        <div class="dialogue-name" id="dialogue-name">COMMANDER DATA</div>
+        <div class="dialogue-text" id="dialogue-text"></div>
+      </div>
+    </div>
+
+    <!-- Mission notification -->
+    <div id="mission-banner" class="hidden">
+      <div class="mission-banner-content">
+        <div class="mission-type" id="mission-type">INCOMING TRANSMISSION</div>
+        <div class="mission-title" id="mission-title"></div>
+      </div>
+    </div>
+
+    <!-- Red Alert overlay flash -->
+    <div id="alert-flash" class="hidden"></div>
+
+    <!-- Loading screen -->
+    <div id="loading-screen">
+      <div class="loading-content">
+        <div class="starfleet-emblem">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="50,5 95,90 5,35 95,35 5,90" fill="none" stroke="#FF9900" stroke-width="2"/>
+            <polygon points="50,15 85,85 18,42 82,42 15,85" fill="none" stroke="#FF6600" stroke-width="1" opacity="0.6"/>
+          </svg>
+        </div>
+        <h1>STAR TREK: BRIDGE COMMAND</h1>
+        <p class="subtitle">USS Enterprise NCC-1701-D</p>
+        <div class="loading-bar-outer">
+          <div class="loading-bar-inner" id="loading-fill"></div>
+        </div>
+        <p class="loading-text" id="loading-text">Initializing ship systems...</p>
+        <p class="loading-subtext">STARFLEET COMMAND — LCARS v7.4.1</p>
+      </div>
+    </div>
+
+    <!-- Mobile controls overlay -->
+    <div id="mobile-controls" class="hidden">
+      <div class="mobile-hint">DRAG TO LOOK · TAP STATION TO INTERACT</div>
+    </div>
+  </div>
+
+</body>
+</html>
