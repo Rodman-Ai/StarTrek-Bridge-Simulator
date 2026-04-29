@@ -28,10 +28,12 @@ export class Bridge {
     this._buildWalls();
     this._buildCeiling();
     this._buildViewscreenWall();
+    this._buildViewscreenGlow();
     this._buildConsoles();
     this._buildChairs();
     this._buildRailings();
     this._buildDoors();
+    this._buildWallAccentPillars();
     this._buildCeilingLights();
     this._buildAlertStrips();
 
@@ -293,11 +295,16 @@ export class Bridge {
     ind.position.set(0, bodyH * 0.6, d / 2 + 0.02);
     group.add(ind);
 
-    // Console glow light
-    const light = new THREE.PointLight(0xFF9900, 3, 2.5);
+    // Console glow light (boosted for physical lighting)
+    const light = new THREE.PointLight(0xFF9900, 10, 3.5);
     light.position.set(0, bodyH + 0.4, 0);
     this.consoleLights.push(light);
     group.add(light);
+
+    // Secondary cool fill light
+    const fillLight = new THREE.PointLight(0x4466FF, 2, 2);
+    fillLight.position.set(0, bodyH + 0.2, -d * 0.3);
+    group.add(fillLight);
 
     // Interactive hitbox
     const hitbox = this._mesh(
@@ -486,25 +493,27 @@ export class Bridge {
 
   _buildCeilingLights() {
     const lightPositions = [
-      { x:  0,   z: -3   },
-      { x: -3.5, z: -1   },
-      { x:  3.5, z: -1   },
-      { x:  0,   z:  1   },
-      { x: -4,   z:  3   },
-      { x:  4,   z:  3   },
+      { x:  0,    z: -4.0, w: 1.2, d: 0.28 },
+      { x: -2.5,  z: -2.5, w: 1.0, d: 0.25 },
+      { x:  2.5,  z: -2.5, w: 1.0, d: 0.25 },
+      { x: -4.5,  z:  0,   w: 0.8, d: 0.25 },
+      { x:  4.5,  z:  0,   w: 0.8, d: 0.25 },
+      { x:  0,    z:  0.8, w: 1.2, d: 0.28 },
+      { x: -3.0,  z:  2.2, w: 0.8, d: 0.25 },
+      { x:  3.0,  z:  2.2, w: 0.8, d: 0.25 },
+      { x: -1.5,  z:  3.8, w: 0.8, d: 0.25 },
+      { x:  1.5,  z:  3.8, w: 0.8, d: 0.25 },
     ];
 
-    const panelMat = new THREE.MeshBasicMaterial({ color: 0xFFF5E0 });
+    const panelMat = new THREE.MeshBasicMaterial({ color: 0xFFF8E8 });
 
     lightPositions.forEach(pos => {
-      // Physical panel geometry
-      const panel = this._mesh(new THREE.PlaneGeometry(1.0, 0.3), panelMat);
+      const panel = this._mesh(new THREE.PlaneGeometry(pos.w, pos.d), panelMat);
       panel.rotation.x = Math.PI / 2;
       panel.position.set(pos.x, H - 0.02, pos.z);
       this.group.add(panel);
 
-      // Actual light source
-      const light = new THREE.PointLight(0xFFE8CC, 12, 5, 2);
+      const light = new THREE.PointLight(0xFFE8CC, 14, 5.5, 2);
       light.position.set(pos.x, H - 0.15, pos.z);
       this.group.add(light);
     });
@@ -549,11 +558,67 @@ export class Bridge {
     });
   }
 
+  // ─── Viewscreen glow effects ──────────────────────────────────────────────
+
+  _buildViewscreenGlow() {
+    const wallZ = -R * 0.88;
+    const vsH   = 3.2;
+
+    // Orange vertical glow strips flanking the viewscreen
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xFF6600 });
+    [-4.55, 4.55].forEach(sx => {
+      const strip = this._mesh(new THREE.BoxGeometry(0.055, vsH * 0.92, 0.04), glowMat);
+      strip.position.set(sx, H / 2, wallZ + 0.14);
+      this.group.add(strip);
+    });
+
+    // Blue ambient light cast from viewscreen direction
+    const vsLight = new THREE.PointLight(0x0033BB, 6, 11, 1.5);
+    vsLight.position.set(0, H / 2, wallZ + 3.0);
+    this.group.add(vsLight);
+
+    // Floor reflection pool beneath viewscreen
+    const floorGlowMat = new THREE.MeshBasicMaterial({ color: 0x002299, transparent: true, opacity: 0.35 });
+    const floorGlow = this._mesh(new THREE.PlaneGeometry(8.5, 2.8), floorGlowMat);
+    floorGlow.rotation.x = -Math.PI / 2;
+    floorGlow.position.set(0, 0.005, wallZ + 1.6);
+    this.group.add(floorGlow);
+  }
+
+  // ─── Wall accent pillars ──────────────────────────────────────────────────
+
+  _buildWallAccentPillars() {
+    // 8 evenly spaced structural accent pillars around the wall arc
+    const arcStart = Math.PI * 0.18;
+    const arcLen   = Math.PI * 1.64;
+    const count    = 8;
+
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x282630, metalness: 0.5, roughness: 0.55 });
+
+    for (let i = 0; i < count; i++) {
+      const angle = arcStart + (i / (count - 1)) * arcLen;
+      const px    = Math.cos(angle) * (R - 0.14);
+      const pz    = Math.sin(angle) * (R - 0.14);
+      const ry    = Math.atan2(-px, -pz);
+
+      const pillar = this._mesh(new THREE.BoxGeometry(0.22, H, 0.13), pillarMat);
+      pillar.position.set(px, H / 2, pz);
+      pillar.rotation.y = ry;
+      this.group.add(pillar);
+
+      // LCARS accent light on each pillar
+      const glow = new THREE.PointLight(0xFF9900, 1.2, 2.2);
+      glow.position.set(px * 0.82, H * 0.48, pz * 0.82);
+      this.consoleLights.push(glow);
+      this.group.add(glow);
+    }
+  }
+
   update(delta) {
     // Subtle console flicker
     const t = performance.now() * 0.001;
     this.consoleLights.forEach((l, i) => {
-      l.intensity = 3 + Math.sin(t * 2.1 + i * 1.3) * 0.3;
+      l.intensity = 10 + Math.sin(t * 2.1 + i * 1.3) * 0.8;
     });
   }
 
